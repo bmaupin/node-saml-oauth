@@ -1,25 +1,37 @@
-var express = require('express');
-var passport = require('passport');
-var LocalStrategy = require('passport-local').Strategy;
+const express = require('express');
+const fs = require('fs');
+const passport = require('passport');
+const SamlStrategy = require('passport-saml').Strategy;
 
-// Configure the local strategy for use by Passport
-passport.use(new LocalStrategy(
-  function(username, password, cb) {
-    let user = { id: 1, username: username };
-    cb(null, user);
-  }));
+let myStrategy = new SamlStrategy(
+  {
+    path: '/login/callback',
+    host: process.env.HOST || 'localhost',
+    entryPoint: process.env.SAML_ENTRY_POINT || 'https://192.168.56.102:8443/auth/realms/master/protocol/saml',
+    issuer: 'passport-saml',
+    cert: process.env.SAML_CERT || null,
+    privateCert: fs.readFileSync('./credentials/key.pem', 'utf-8'),
+    decryptionPvk: fs.readFileSync('./credentials/key.pem', 'utf-8'),
+  },
+  function(profile, done) {
+    profile.assertionXml = profile.getAssertionXml();
+    done(null, profile);
+  }
+);
+
+passport.use(myStrategy);
 
 // Configure Passport authenticated session persistence
-passport.serializeUser(function(user, cb) {
-  cb(null, user);
+passport.serializeUser(function(user, done) {
+  done(null, user);
 });
 
-passport.deserializeUser(function(user, cb) {
-  cb(null, user);
+passport.deserializeUser(function(user, done) {
+  done(null, user);
 });
 
 // Create a new Express application
-var app = express();
+let app = express();
 
 // Configure view engine to render EJS templates
 app.set('views', __dirname + '/views');
@@ -41,20 +53,33 @@ app.get('/',
   });
 
 app.get('/login',
-  function(req, res){
-    res.render('login');
-  });
-
-app.post('/login',
-  passport.authenticate('local', { failureRedirect: '/login' }),
+  passport.authenticate('saml', { failureRedirect: '/' }),
   function(req, res) {
     res.redirect('/');
-  });
+  }
+);
 
+app.post('/login/callback',
+  passport.authenticate('saml', { failureRedirect: '/' }),
+  function(req, res) {
+    res.redirect('/');
+  }
+);
+
+// TODO: This only logs out of the app, not the IdP
 app.get('/logout',
-  function(req, res){
+  function(req, res) {
     req.logout();
     res.redirect('/');
-  });
+  }
+);
 
-app.listen(3000);
+app.get('/metadata',
+  function(req, res) {
+    const decryptionCert = fs.readFileSync('./credentials/cert.pem', 'utf-8');
+    res.type('application/xml');
+    res.send((myStrategy.generateServiceProviderMetadata(decryptionCert)));
+  }
+);
+
+app.listen(process.env.PORT || 8080, '0.0.0.0');

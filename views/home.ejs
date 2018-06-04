@@ -1,9 +1,18 @@
 <% if (!user) { %>
 	<p>Welcome! Please <a href="/login">log in</a>.</p>
 <% } else { %>
+	<h3>SAML properties:</h3>
 	<p>
-		ID: <%= user.id %><br/>
-		Username: <%= user.username %><br/>
+		<% for (let property in user) { %>
+			<% if (user.hasOwnProperty(property) && property !== 'assertionXml') { %>
+				<%= property %> : <%= user[property] %><br/>
+			<% } %>
+		<% } %>
 	</p>
-	<a href="/logout">Log out</a>
+	<!-- <code>
+		<%= user.assertionXml %>
+	</code> -->
+	<p>
+		<a href="/logout">Log out</a>
+	</p>
 <% } %>
