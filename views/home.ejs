@@ -1,17 +1,33 @@
 <% if (!user) { %>
-	<p>Welcome! Please <a href="/login">log in</a>.</p>
+	<p>Welcome! Please <a href="/saml/login">log in</a>.</p>
 <% } else { %>
-	<h3>SAML properties:</h3>
-	<p>
-		<% for (let property in user) { %>
-			<% if (user.hasOwnProperty(property) && property !== 'assertionXml') { %>
-				<%= property %> : <%= user[property] %><br/>
+	<% if (user.hasOwnProperty('saml')) { %>
+		<h3>SAML properties:</h3>
+		<p>
+			<% for (let property in user.saml) { %>
+				<% if (user.saml.hasOwnProperty(property) && property !== 'assertionXml') { %>
+					<%= property %> : <%= user.saml[property] %><br/>
+				<% } %>
 			<% } %>
-		<% } %>
-	</p>
-	<!-- <code>
-		<%= user.assertionXml %>
-	</code> -->
+		</p>
+		<!-- <code>
+			<%= user.saml.assertionXml %>
+		</code> -->
+	<% } %>
+	<% if (user.hasOwnProperty('oauth2')) { %>
+		<h3>Oauth properties:</h3>
+		<p>
+			<% for (let property in user.oauth2) { %>
+				<% if (user.oauth2.hasOwnProperty(property)) { %>
+					<%= property %> : <%= user.oauth2[property] %><br/>
+				<% } %>
+			<% } %>
+		</p>
+	<% } else { %>
+		<p>
+			<a href="/oauth2/authorize">Authorize</a>
+		</p>
+	<% } %>
 	<p>
 		<a href="/logout">Log out</a>
 	</p>
