@@ -1,34 +1,58 @@
-<% if (!user) { %>
-	<p>Welcome! Please <a href="/saml/login">log in</a>.</p>
-<% } else { %>
-	<% if (user.hasOwnProperty('saml')) { %>
-		<h3>SAML properties:</h3>
-		<p>
-			<% for (let property in user.saml) { %>
-				<% if (user.saml.hasOwnProperty(property) && property !== 'assertionXml') { %>
-					<%= property %> : <%= user.saml[property] %><br/>
-				<% } %>
-			<% } %>
-		</p>
-		<!-- <code>
-			<%= user.saml.assertionXml %>
-		</code> -->
-	<% } %>
-	<% if (user.hasOwnProperty('oauth2')) { %>
-		<h3>Oauth properties:</h3>
-		<p>
-			<% for (let property in user.oauth2) { %>
-				<% if (user.oauth2.hasOwnProperty(property)) { %>
-					<%= property %> : <%= user.oauth2[property] %><br/>
-				<% } %>
-			<% } %>
-		</p>
-	<% } else { %>
-		<p>
-			<a href="/oauth2/authorize">Authorize</a>
-		</p>
-	<% } %>
-	<p>
-		<a href="/logout">Log out</a>
-	</p>
-<% } %>
+<!doctype html>
+<html>
+<head>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css" integrity="sha384-9gVQ4dYFwwWSjIDZnLEWnxCjeSWFphJiwGPXr1jddIhOegiu1FwO5qRGvFXOdJZ4" crossorigin="anonymous">
+</head>
+<body style="line-height: 1.8">
+  <div class="container" style="padding-top: 60px">
+    <h1 style="padding-bottom: 20px">SAML/OAuth 2 test</h1>
+    <% if (!user) { %>
+      <p>Welcome! Please <a href="/saml/login">log in</a>.</p>
+    <% } else { %>
+      <% if (user.hasOwnProperty('saml')) { %>
+        <h4>SAML properties:</h4>
+        <p>
+          <% for (let property in user.saml) { %>
+            <% if (user.saml.hasOwnProperty(property)) { %>
+              <span style="align-items: center; display: flex; flex-flow: row wrap;">
+                <span style="margin-right: 0.3em"><%= property %> :</span>
+                <code style="overflow: auto; white-space: pre;"><%= user.saml[property] %></code>
+              </span>
+            <% } %>
+          <% } %>
+        </p>
+      <% } %>
+      <% if (user.hasOwnProperty('oauth2')) { %>
+      <div style="padding-top: 20px">
+        <h4>OAuth properties:</h4>
+        <p>
+          <% for (let property in user.oauth2) { %>
+            <% if (user.oauth2.hasOwnProperty(property)) { %>
+              <span style="align-items: center; display: flex; flex-flow: row wrap;">
+                  <span style="flex: none; margin-right: 0.3em"><%= property %> :</span>
+                  <code style="overflow: auto; white-space: pre;"><% _%>
+                      <%_ if (typeof(user.oauth2[property]) === 'object') { _%>
+                      <%_ %><%= JSON.stringify(user.oauth2[property]) %><% _%>
+                    <%_ } else { _%>
+                      <%_ %><%= user.oauth2[property] %><% _%>
+                    <%_ } _%>
+                  </code>
+                </span>
+            <% } %>
+          <% } %>
+        </p>
+      </div>
+      <% } else { %>
+        <p>
+          <a href="/oauth2/authorize">Authorize</a>
+        </p>
+      <% } %>
+      <div style="padding-top: 20px">
+        <p>
+          <a href="/logout">Log out</a>
+        </p>
+      </div>
+    <% } %>
+  </div>
+</body>
+</html>
