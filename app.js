@@ -1,12 +1,29 @@
 const express = require('express');
 const fs = require('fs');
 const passport = require('passport');
+const OAuth2Strategy = require('passport-oauth2').Strategy;
 const SamlStrategy = require('passport-saml').Strategy;
 
-let myStrategy = new SamlStrategy(
+
+var http = require('http');
+var https = require('https');
+var privateKey  = fs.readFileSync('./credentials/key.pem', 'utf8');
+var certificate = fs.readFileSync('./credentials/cert.pem', 'utf8');
+var credentials = {key: privateKey, cert: certificate};
+https.globalAgent.options.rejectUnauthorized = false;
+
+
+
+const host = process.env.HOST || 'localhost';
+const port = process.env.PORT || 3000;
+
+// TODO
+let user = {};
+
+let samlStrategy = new SamlStrategy(
   {
-    path: '/login/callback',
-    host: process.env.HOST || 'localhost',
+    path: '/saml/login/callback',
+    host: `${host}:${port}`,
     entryPoint: process.env.SAML_ENTRY_POINT || 'https://192.168.56.102:8443/auth/realms/master/protocol/saml',
     issuer: 'passport-saml',
     cert: process.env.SAML_CERT || null,
@@ -14,12 +31,30 @@ let myStrategy = new SamlStrategy(
     decryptionPvk: fs.readFileSync('./credentials/key.pem', 'utf-8'),
   },
   function(profile, done) {
-    profile.assertionXml = profile.getAssertionXml();
-    done(null, profile);
+    user.saml = profile;
+    user.saml.assertionXml = profile.getAssertionXml();
+    done(null, user);
   }
 );
 
-passport.use(myStrategy);
+passport.use(samlStrategy);
+
+passport.use(new OAuth2Strategy(
+  {
+    authorizationURL: 'https://192.168.56.102:8443/auth/realms/master/protocol/openid-connect/auth',
+    tokenURL: 'https://192.168.56.102:8443/auth/realms/master/protocol/openid-connect/token',
+    clientID: process.env.OAUTH_CLIENT_ID || null,
+    clientSecret: process.env.OAUTH_CLIENT_SECRET || null,
+    callbackURL: `http://${host}:${port}/oauth2/authorize/callback`,
+  },
+  function(accessToken, refreshToken, profile, done) {
+    user.oauth2 = {};
+    user.oauth2.accessToken = accessToken;
+    user.oauth2.profile = profile;
+    user.oauth2.refreshToken = refreshToken;
+    done(null, user);
+  }
+));
 
 // Configure Passport authenticated session persistence
 passport.serializeUser(function(user, done) {
@@ -52,34 +87,52 @@ app.get('/',
     res.render('home', { user: req.user });
   });
 
-app.get('/login',
-  passport.authenticate('saml', { failureRedirect: '/' }),
-  function(req, res) {
-    res.redirect('/');
-  }
-);
-
-app.post('/login/callback',
-  passport.authenticate('saml', { failureRedirect: '/' }),
-  function(req, res) {
-    res.redirect('/');
-  }
-);
-
 // TODO: This only logs out of the app, not the IdP
 app.get('/logout',
   function(req, res) {
+    user = {};
     req.logout();
     res.redirect('/');
   }
 );
 
-app.get('/metadata',
+app.get('/oauth2/authorize',
+  passport.authenticate('oauth2')
+);
+
+app.get('/oauth2/authorize/callback',
+  passport.authenticate('oauth2', { failureRedirect: '/' }),
   function(req, res) {
-    const decryptionCert = fs.readFileSync('./credentials/cert.pem', 'utf-8');
-    res.type('application/xml');
-    res.send((myStrategy.generateServiceProviderMetadata(decryptionCert)));
+    // Successful authentication, redirect home.
+    res.redirect('/');
   }
 );
 
-app.listen(process.env.PORT || 8080, '0.0.0.0');
+app.get('/saml/login',
+  passport.authenticate('saml', { failureRedirect: '/' }),
+  function(req, res) {
+    res.redirect('/');
+  }
+);
+
+app.post('/saml/login/callback',
+  passport.authenticate('saml', { failureRedirect: '/' }),
+  function(req, res) {
+    res.redirect('/');
+  }
+);
+
+app.get('/saml/metadata',
+  function(req, res) {
+    const decryptionCert = fs.readFileSync('./credentials/cert.pem', 'utf-8');
+    res.type('application/xml');
+    res.send((samlStrategy.generateServiceProviderMetadata(decryptionCert)));
+  }
+);
+
+app.listen(port, '0.0.0.0');
+
+// var httpServer = http.createServer(app);
+// var httpsServer = https.createServer(credentials, app);
+// httpServer.listen(8080);
+// httpsServer.listen(port, '0.0.0.0');
