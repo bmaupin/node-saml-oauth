@@ -4,11 +4,11 @@ const passport = require('passport');
 const OAuth2Strategy = require('passport-oauth2').Strategy;
 const SamlStrategy = require('passport-saml').Strategy;
 
-// This is to ignore self signed certificate error for OAuth 2
-require('https').globalAgent.options.rejectUnauthorized = false;
-
 const host = process.env.HOST || 'localhost';
 const port = process.env.PORT || 3000;
+
+// This is to ignore self signed certificate error for OAuth 2
+require('https').globalAgent.options.rejectUnauthorized = false;
 
 let samlStrategy = new SamlStrategy(
   {
@@ -16,7 +16,7 @@ let samlStrategy = new SamlStrategy(
     host: `${host}:${port}`,
     entryPoint: process.env.SAML_ENTRY_POINT || 'https://192.168.56.102:8443/auth/realms/master/protocol/saml',
     issuer: 'passport-saml',
-    cert: process.env.SAML_CERT || null,
+    cert: process.env.SAML_IDP_CERT || null,
     privateCert: fs.readFileSync('./credentials/key.pem', 'utf-8'),
     decryptionPvk: fs.readFileSync('./credentials/key.pem', 'utf-8'),
   },
@@ -69,6 +69,7 @@ app.set('view engine', 'ejs');
 app.use(require('morgan')('combined'));
 app.use(require('body-parser').urlencoded({ extended: true }));
 app.use(require('express-session')({ secret: 'keyboard cat', resave: false, saveUninitialized: false }));
+app.use(require('helmet')());
 
 // Initialize Passport and restore authentication state, if any, from the session
 app.use(passport.initialize());
@@ -96,16 +97,12 @@ app.get('/oauth2/authorize',
 app.get('/oauth2/authorize/callback',
   passport.authenticate('oauth2', { failureRedirect: '/' }),
   function(req, res) {
-    // Successful authentication, redirect home.
     res.redirect('/');
   }
 );
 
 app.get('/saml/login',
-  passport.authenticate('saml', { failureRedirect: '/' }),
-  function(req, res) {
-    res.redirect('/');
-  }
+  passport.authenticate('saml')
 );
 
 app.post('/saml/login/callback',
