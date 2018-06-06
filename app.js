@@ -1,6 +1,7 @@
 const express = require('express');
 const fs = require('fs');
 const passport = require('passport');
+const path = require('path');
 const OAuth2Strategy = require('passport-oauth2').Strategy;
 const SamlStrategy = require('passport-saml').Strategy;
 
@@ -70,6 +71,7 @@ app.use(require('morgan')('combined'));
 app.use(require('body-parser').urlencoded({ extended: true }));
 app.use(require('express-session')({ secret: 'keyboard cat', resave: false, saveUninitialized: false }));
 app.use(require('helmet')());
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Initialize Passport and restore authentication state, if any, from the session
 app.use(passport.initialize());

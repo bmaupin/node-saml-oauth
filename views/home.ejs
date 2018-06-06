@@ -2,52 +2,59 @@
 <html>
 <head>
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css" integrity="sha384-9gVQ4dYFwwWSjIDZnLEWnxCjeSWFphJiwGPXr1jddIhOegiu1FwO5qRGvFXOdJZ4" crossorigin="anonymous">
+  <link rel="stylesheet" href="/styles/style.css">
 </head>
-<body style="line-height: 1.8">
-  <div class="container" style="padding-top: 60px">
-    <h1 style="padding-bottom: 20px">SAML/OAuth 2 test</h1>
+<body>
+  <div class="container">
+    <h1>SAML/OAuth 2 test</h1>
     <% if (!user) { %>
-      <p>Welcome! Please <a href="/saml/login">log in</a>.</p>
+      <div class="section">
+        <p>Welcome! Please <a href="/saml/login">log in</a>.</p>
+      </div>
     <% } else { %>
       <% if (user.hasOwnProperty('saml')) { %>
-        <h4>SAML properties:</h4>
-        <p>
-          <% for (let property in user.saml) { %>
-            <% if (user.saml.hasOwnProperty(property)) { %>
-              <span style="align-items: center; display: flex; flex-flow: row wrap;">
-                <span style="margin-right: 0.3em"><%= property %> :</span>
-                <code style="overflow: auto; white-space: pre;"><%= user.saml[property] %></code>
-              </span>
+        <div class="section">
+          <h4>SAML properties:</h4>
+          <p>
+            <% for (let property in user.saml) { %>
+              <% if (user.saml.hasOwnProperty(property)) { %>
+                <span class="property-item">
+                  <span class="property-label"><%= property %> :</span>
+                  <code class="property-value"><%= user.saml[property] %></code>
+                </span>
+              <% } %>
             <% } %>
-          <% } %>
-        </p>
+          </p>
+        </div>
       <% } %>
       <% if (user.hasOwnProperty('oauth2')) { %>
-      <div style="padding-top: 20px">
-        <h4>OAuth properties:</h4>
-        <p>
-          <% for (let property in user.oauth2) { %>
-            <% if (user.oauth2.hasOwnProperty(property)) { %>
-              <span style="align-items: center; display: flex; flex-flow: row wrap;">
-                  <span style="flex: none; margin-right: 0.3em"><%= property %> :</span>
-                  <code style="overflow: auto; white-space: pre;"><% _%>
-                      <%_ if (typeof(user.oauth2[property]) === 'object') { _%>
+        <div class="section">
+          <h4>OAuth properties:</h4>
+          <p>
+            <% for (let property in user.oauth2) { %>
+              <% if (user.oauth2.hasOwnProperty(property)) { %>
+                <span class="property-item">
+                  <span class="property-label"><%= property %> :</span>
+                  <code class="property-value"><% _%>
+                    <%_ if (typeof(user.oauth2[property]) === 'object') { _%>
                       <%_ %><%= JSON.stringify(user.oauth2[property]) %><% _%>
                     <%_ } else { _%>
                       <%_ %><%= user.oauth2[property] %><% _%>
                     <%_ } _%>
                   </code>
                 </span>
+              <% } %>
             <% } %>
-          <% } %>
-        </p>
-      </div>
+          </p>
+        </div>
       <% } else { %>
-        <p>
-          <a href="/oauth2/authorize">Authorize</a>
-        </p>
+        <div class="section">
+          <p>
+            <a href="/oauth2/authorize">Authorize</a>
+          </p>
+        </div>
       <% } %>
-      <div style="padding-top: 20px">
+      <div class="section">
         <p>
           <a href="/logout">Log out</a>
         </p>
