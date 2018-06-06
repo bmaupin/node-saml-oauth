@@ -1,0 +1,26 @@
+body {
+    line-height: 1.8;
+}
+
+.container {
+    padding-top: 60px;
+}
+
+.property-item {
+    align-items: center;
+    display: flex;
+    flex-flow: row wrap;
+}
+
+.property-label {
+    margin-right: 0.3em;
+}
+
+.property-value {
+    overflow: auto;
+    white-space: pre;
+}
+
+.section {
+    padding-top: 20px;
+}
