@@ -2,11 +2,12 @@ const express = require('express');
 const fs = require('fs');
 const passport = require('passport');
 const path = require('path');
+const url = require('url');
 const OAuth2Strategy = require('passport-oauth2').Strategy;
 const SamlStrategy = require('passport-saml').Strategy;
 
 const port = process.env.PORT || 3000;
-const callbackBaseUrl = process.env.CALLBACK_BASE_URL || `http://localhost:${port}`;
+const callbackBaseUrl = process.env.CALLBACK_BASE_URL || `http://localhost:${port}/`;
 let samlSpKey = null;
 if (typeof(process.env.SAML_SP_KEY) !== 'undefined') {
   samlSpKey = `-----BEGIN PRIVATE KEY-----\n${process.env.SAML_SP_KEY.replace(/\\n/g, '')}\n-----END PRIVATE KEY-----`;
@@ -17,7 +18,7 @@ require('https').globalAgent.options.rejectUnauthorized = false;
 
 let samlStrategy = new SamlStrategy(
   {
-    callbackUrl: `${callbackBaseUrl}/saml/login/callback`,
+    callbackUrl: url.resolve(callbackBaseUrl, 'saml/login/callback'),
     entryPoint: process.env.SAML_ENTRY_POINT,
     issuer: 'passport-saml',
     cert: process.env.SAML_IDP_CERT.replace(/\\n/g, '') || null,
@@ -39,7 +40,7 @@ passport.use(new OAuth2Strategy(
     tokenURL: process.env.OAUTH_TOKEN_URL,
     clientID: process.env.OAUTH_CLIENT_ID || null,
     clientSecret: process.env.OAUTH_CLIENT_SECRET || null,
-    callbackURL: `${callbackBaseUrl}/oauth2/authorize/callback`,
+    callbackURL: url.resolve(callbackBaseUrl, 'oauth2/authorize/callback'),
     passReqToCallback: true,
   },
   function(req, accessToken, refreshToken, params, profile, done) {
