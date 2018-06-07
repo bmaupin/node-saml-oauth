@@ -7,6 +7,10 @@ const SamlStrategy = require('passport-saml').Strategy;
 
 const port = process.env.PORT || 3000;
 const callbackBaseUrl = process.env.CALLBACK_BASE_URL || `http://localhost:${port}`;
+let samlSpKey = null;
+if (typeof(process.env.SAML_SP_KEY) !== 'undefined') {
+  samlSpKey = `-----BEGIN PRIVATE KEY-----\n${process.env.SAML_SP_KEY.replace(/\\n/g, '')}\n-----END PRIVATE KEY-----`;
+}
 
 // This is to ignore self signed certificate error for OAuth 2
 require('https').globalAgent.options.rejectUnauthorized = false;
@@ -16,9 +20,9 @@ let samlStrategy = new SamlStrategy(
     callbackUrl: `${callbackBaseUrl}/saml/login/callback`,
     entryPoint: process.env.SAML_ENTRY_POINT,
     issuer: 'passport-saml',
-    cert: process.env.SAML_IDP_CERT || null,
-    privateCert: process.env.SAML_SP_KEY.replace(/\\n/g, '\n') || null,
-    decryptionPvk: process.env.SAML_SP_KEY.replace(/\\n/g, '\n') || null,
+    cert: process.env.SAML_IDP_CERT.replace(/\\n/g, '') || null,
+    privateCert: samlSpKey,
+    decryptionPvk: samlSpKey,
   },
   function(profile, done) {
     let user = {};
@@ -115,8 +119,12 @@ app.post('/saml/login/callback',
 
 app.get('/saml/metadata',
   function(req, res) {
+    let samlSpCert = null;
+    if (typeof(process.env.SAML_SP_CERT) !== 'undefined') {
+      samlSpCert = `-----BEGIN CERTIFICATE-----\n${process.env.SAML_SP_CERT.replace(/\\n/g, '\n')}\n-----END CERTIFICATE-----`;
+    }
     res.type('application/xml');
-    res.send((samlStrategy.generateServiceProviderMetadata(process.env.SAML_SP_CERT.replace(/\\n/g, '\n') || null)));
+    res.send((samlStrategy.generateServiceProviderMetadata(samlSpCert)));
   }
 );
 
