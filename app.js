@@ -5,21 +5,20 @@ const path = require('path');
 const OAuth2Strategy = require('passport-oauth2').Strategy;
 const SamlStrategy = require('passport-saml').Strategy;
 
-const host = process.env.HOST || 'localhost';
 const port = process.env.PORT || 3000;
+const callbackBaseUrl = process.env.CALLBACK_BASE_URL || `http://localhost:${port}`;
 
 // This is to ignore self signed certificate error for OAuth 2
 require('https').globalAgent.options.rejectUnauthorized = false;
 
 let samlStrategy = new SamlStrategy(
   {
-    path: '/saml/login/callback',
-    host: `${host}:${port}`,
-    entryPoint: process.env.SAML_ENTRY_POINT || 'https://192.168.56.102:8443/auth/realms/master/protocol/saml',
+    callbackUrl: `${callbackBaseUrl}/saml/login/callback`,
+    entryPoint: process.env.SAML_ENTRY_POINT,
     issuer: 'passport-saml',
     cert: process.env.SAML_IDP_CERT || null,
-    privateCert: fs.readFileSync('./credentials/key.pem', 'utf-8'),
-    decryptionPvk: fs.readFileSync('./credentials/key.pem', 'utf-8'),
+    privateCert: process.env.SAML_SP_KEY.replace(/\\n/g, '\n') || null,
+    decryptionPvk: process.env.SAML_SP_KEY.replace(/\\n/g, '\n') || null,
   },
   function(profile, done) {
     let user = {};
@@ -32,11 +31,11 @@ passport.use(samlStrategy);
 
 passport.use(new OAuth2Strategy(
   {
-    authorizationURL: 'https://192.168.56.102:8443/auth/realms/master/protocol/openid-connect/auth',
-    tokenURL: 'https://192.168.56.102:8443/auth/realms/master/protocol/openid-connect/token',
+    authorizationURL: process.env.OAUTH_AUTH_URL,
+    tokenURL: process.env.OAUTH_TOKEN_URL,
     clientID: process.env.OAUTH_CLIENT_ID || null,
     clientSecret: process.env.OAUTH_CLIENT_SECRET || null,
-    callbackURL: `http://${host}:${port}/oauth2/authorize/callback`,
+    callbackURL: `${callbackBaseUrl}/oauth2/authorize/callback`,
     passReqToCallback: true,
   },
   function(req, accessToken, refreshToken, params, profile, done) {
@@ -88,7 +87,7 @@ app.get('/',
 app.get('/logout',
   function(req, res) {
     req.logout();
-    res.redirect('/');
+    res.redirect(process.env.LOGOUT_URL || '/');
   }
 );
 
@@ -116,9 +115,8 @@ app.post('/saml/login/callback',
 
 app.get('/saml/metadata',
   function(req, res) {
-    const decryptionCert = fs.readFileSync('./credentials/cert.pem', 'utf-8');
     res.type('application/xml');
-    res.send((samlStrategy.generateServiceProviderMetadata(decryptionCert)));
+    res.send((samlStrategy.generateServiceProviderMetadata(process.env.SAML_SP_CERT.replace(/\\n/g, '\n') || null)));
   }
 );
 
