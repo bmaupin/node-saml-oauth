@@ -44,8 +44,11 @@ passport.use(new OAuth2Strategy(
     passReqToCallback: true,
   },
   function(req, accessToken, refreshToken, params, profile, done) {
-    // Reuse the existing user from the SAML login
-    let user = req.user;
+    let user = {};
+    if (typeof(req.user) !== 'undefined') {
+      // Reuse the existing user from the SAML login
+      user = req.user;
+    }
     user.oauth2 = profile;
     user.oauth2.accessToken = accessToken;
     user.oauth2.params = params;
