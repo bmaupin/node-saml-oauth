@@ -1,0 +1,25 @@
+version: "3"
+
+services:
+  node-saml-oauth:
+    # The latest LTS version of Node.js
+    image: "node:8"
+    user: "node"
+    working_dir: /home/node/app
+    environment:
+      - CALLBACK_BASE_URL
+      - LOGOUT_URL
+      - OAUTH_AUTH_URL
+      - OAUTH_CLIENT_ID
+      - OAUTH_CLIENT_SECRET
+      - OAUTH_TOKEN_URL
+      - PORT
+      - SAML_ENTRY_POINT
+      - SAML_IDP_CERT
+      - SAML_SP_CERT
+      - SAML_SP_KEY
+    volumes:
+      - ./:/home/node/app
+    ports:
+      - "${PORT}:${PORT}"
+    command: "npm start"
