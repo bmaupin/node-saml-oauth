@@ -2,6 +2,7 @@ const express = require('express');
 const fs = require('fs');
 const passport = require('passport');
 const path = require('path');
+const request = require('request');
 const url = require('url');
 const OAuth2Strategy = require('passport-oauth2').Strategy;
 const SamlStrategy = require('passport-saml').Strategy;
@@ -91,6 +92,34 @@ app.get('/',
   }
 );
 
+app.get('/api/test', (req, res) => {
+  // Adapted from https://stackoverflow.com/a/51047525/399105
+  const options = {
+    url: process.env.OAUTH_VALIDATION_URL,
+    headers: {
+      // Send the authorization header directly to the OAuth server
+      Authorization: req.headers.authorization,
+    },
+  };
+
+  request(options, (error, response, body) => {
+    if (error) {
+      res.status(500);
+      res.json({ error: error.toString() });
+
+    } else if (response.statusCode !== 200) {
+      res.status(response.statusCode);
+      if (body) {
+        res.json(JSON.parse(body));
+      }
+      res.send();
+
+    } else {
+      res.json({ test: 'successful!' });
+    }
+  });
+});
+
 // TODO: This only logs out of the app, not the IdP
 app.get('/logout',
   function(req, res) {
@@ -106,7 +135,24 @@ app.get('/oauth2/authorize',
 app.get('/oauth2/authorize/callback',
   passport.authenticate('oauth2', { failureRedirect: '/' }),
   function(req, res) {
-    res.redirect('/');
+    const options = {
+      url: url.resolve(callbackBaseUrl, '/api/test'),
+      headers: {
+        Authorization: `Bearer ${req.user.oauth2.accessToken}`,
+      },
+    };
+
+    request(options, (error, response, body) => {
+      req.user.api = {};
+
+      if (error) {
+        req.user.api.response = error.toString();
+      } else {
+        req.user.api.response = body.toString();
+      }
+
+      res.redirect('/');
+    });
   }
 );
 
@@ -132,4 +178,4 @@ app.get('/saml/metadata',
   }
 );
 
-app.listen(port, '0.0.0.0');
+app.listen(port, '0.0.0.0', () => console.log(`Listening on port ${port}`));

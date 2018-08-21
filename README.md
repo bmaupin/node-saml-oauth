@@ -18,6 +18,8 @@ The following environment variables must be defined:
     - As an example, for Keycloak this might be `https://hostname/auth/realms/master/protocol/openid-connect/auth`
 - `OAUTH_TOKEN_URL`: OAuth 2 token endpoint URL
     - As an example, for Keycloak this might be `https://hostname/auth/realms/master/protocol/openid-connect/token`
+- `OAUTH_VALIDATION_URL`: OAuth 2 token validation URL
+    - As an example, for Keycloak this might be `https://hostname/auth/realms/master/protocol/openid-connect/userinfo`
 - `SAML_ENTRY_POINT`: SAML IdP (Identity Provider) HTTP redirect binding URL
     - You can get this from the IdP metadata (look for `urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect`)
     - As an example, for Keycloak this might be `https://hostname/auth/realms/master/protocol/saml`

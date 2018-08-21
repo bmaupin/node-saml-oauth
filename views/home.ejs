@@ -54,6 +54,16 @@
           </p>
         </div>
       <% } %>
+      <% if (user.hasOwnProperty('api')) { %>
+        <div class="section">
+          <h4>API response:</h4>
+          <p>
+            <span class="property-item">
+              <code class="property-value"><%= user.api.response %></code>
+            </span>
+          </p>
+        </div>
+      <% } %>
       <div class="section">
         <p>
           <a href="/logout">Log out</a>
