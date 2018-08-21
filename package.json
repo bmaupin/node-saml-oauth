@@ -14,6 +14,7 @@
     "morgan": "^1.6.1",
     "passport": "^0.4.0",
     "passport-oauth2": "^1.4.0",
-    "passport-saml": "^0.33.0"
+    "passport-saml": "^0.33.0",
+    "request": "^2.88.0"
   }
 }
