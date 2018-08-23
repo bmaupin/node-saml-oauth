@@ -1,5 +1,4 @@
 const express = require('express');
-const fs = require('fs');
 const passport = require('passport');
 const path = require('path');
 const request = require('request');
@@ -10,7 +9,7 @@ const SamlStrategy = require('passport-saml').Strategy;
 const port = process.env.PORT || 3000;
 const callbackBaseUrl = process.env.CALLBACK_BASE_URL || `http://localhost:${port}/`;
 let samlSpKey = null;
-if (typeof(process.env.SAML_SP_KEY) !== 'undefined') {
+if (typeof process.env.SAML_SP_KEY !== 'undefined') {
   samlSpKey = `-----BEGIN PRIVATE KEY-----\n${process.env.SAML_SP_KEY}\n-----END PRIVATE KEY-----`;
 }
 
@@ -46,7 +45,7 @@ passport.use(new OAuth2Strategy(
   },
   function(req, accessToken, refreshToken, params, profile, done) {
     let user = {};
-    if (typeof(req.user) !== 'undefined') {
+    if (typeof req.user !== 'undefined') {
       // Reuse the existing user from the SAML login
       user = req.user;
     }
@@ -170,7 +169,7 @@ app.post('/saml/login/callback',
 app.get('/saml/metadata',
   function(req, res) {
     let samlSpCert = null;
-    if (typeof(process.env.SAML_SP_CERT) !== 'undefined') {
+    if (typeof process.env.SAML_SP_CERT !== 'undefined') {
       samlSpCert = `-----BEGIN CERTIFICATE-----\n${process.env.SAML_SP_CERT}\n-----END CERTIFICATE-----`;
     }
     res.type('application/xml');
